@@ -4,51 +4,91 @@ import { User } from '../../typeorm/src/entity/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { OAuth2Client } from 'google-auth-library';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    @InjectRepository(User)
-    private userRepo: Repository<User>,
-    private jwtService: JwtService,
-  ) {}
+    private google: OAuth2Client;
 
-  async signup(data: {
-    email: string;
-    password: string;
-    firstName?: string;
-    lastName?: string;
-  }) {
-    const existing = await this.userRepo.findOne({ where: { email: data.email } });
-    if (existing) {
-      throw new UnauthorizedException('Email already in use');
+    constructor(
+        @InjectRepository(User)
+        private userRepo: Repository<User>,
+        private jwtService: JwtService,
+        private config: ConfigService
+    ) {
+        this.google = new OAuth2Client();
     }
 
-    const hash = await bcrypt.hash(data.password, 10);
-    const user = this.userRepo.create({ ...data, password: hash });
-    await this.userRepo.save(user);
-    return this.login(user);
-  }
+    async loginWithGoogle(idToken: string) {
+        const ticket = await this.google.verifyIdToken({
+        idToken,
+        audience: [
+            this.config.get<string>('GOOGLE_CLIENT_ID_WEB')!,
+            this.config.get<string>('GOOGLE_CLIENT_ID_ANDROID')!,
+            this.config.get<string>('GOOGLE_CLIENT_ID_IOS')!,
+        ],
+        });
 
-  async loginWithEmail(email: string, password: string) {
-    const user = await this.userRepo.findOne({ where: { email } });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
+        if (!ticket) {
+            throw new UnauthorizedException('Invalid Google token');
+        }
+
+        const { email, given_name, family_name } = ticket.getPayload() || {};
+
+        if (!email) throw new UnauthorizedException('Google token missing e‑mail');
+
+        let user = await this.userRepo.findOne({ where: { email } });
+
+        if (!user) {
+            user = this.userRepo.create({
+                email,
+                firstName: given_name,
+                lastName: family_name,
+                password: "",
+            });
+            await this.userRepo.save(user);
+        }
+
+        return this.login(user);
+   }
+
+    async signup(data: {
+        email: string;
+        password: string;
+        firstName?: string;
+        lastName?: string;
+    }) {
+        const existing = await this.userRepo.findOne({ where: { email: data.email } });
+        if (existing) {
+        throw new UnauthorizedException('Email already in use');
+        }
+
+        const hash = await bcrypt.hash(data.password, 10);
+        const user = this.userRepo.create({ ...data, password: hash });
+        await this.userRepo.save(user);
+        return this.login(user);
     }
 
-    return this.login(user);
-  }
+    async loginWithEmail(email: string, password: string) {
+        const user = await this.userRepo.findOne({ where: { email } });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+        throw new UnauthorizedException('Invalid credentials');
+        }
 
-  private login(user: User) {
-    const payload = { sub: user.id, email: user.email };
-    return {
-      accessToken: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      },
-    };
-  }
+        return this.login(user);
+    }
+
+    private login(user: User) {
+        const payload = { sub: user.id, email: user.email };
+        return {
+        accessToken: this.jwtService.sign(payload),
+        user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+        },
+        };
+    }
 }
