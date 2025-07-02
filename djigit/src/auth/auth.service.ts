@@ -97,10 +97,13 @@ export class AuthService {
 
     async loginWithEmail(email: string, password: string) {
         const user = await this.userRepo.findOne({ where: { email } });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-        throw new UnauthorizedException('Invalid credentials');
+        if (!user) {
+            throw new UnauthorizedException('No user found with this email');
         }
-
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            throw new UnauthorizedException('Incorrect password');
+        }
         return this.login(user);
     }
 
