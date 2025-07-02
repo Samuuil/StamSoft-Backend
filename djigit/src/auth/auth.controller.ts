@@ -21,7 +21,7 @@ export class AuthController {
 
     @ApiOperation({ summary: 'User login' })
     @ApiBody({ schema: { example: { email: 'user@example.com', password: 'Password123' }}})
-    @ApiOkResponse({ description: 'User successfully logged in.', schema: { example: { accessToken: 'jwt.token.here', user: { id: 1, email: 'user@example.com', firstName: 'John', lastName: 'Doe' } } } })
+    @ApiCreatedResponse({ description: 'User successfully logged in.', schema: { example: { accessToken: 'jwt.token.here', user: { id: 1, email: 'user@example.com', firstName: 'John', lastName: 'Doe' } } } })
     @ApiResponse({ status: 401, description: 'No user found with this email.' })
     @ApiResponse({ status: 401, description: 'Incorrect password.' })
     @ApiResponse({ status: 400, description: 'Validation error.' })

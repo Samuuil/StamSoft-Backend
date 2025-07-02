@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../typeorm/src/entity/user.entity';
 import { Car } from '../../typeorm/src/entity/car.entity'; 
@@ -74,6 +74,13 @@ export class AuthService {
         throw new UnauthorizedException('Email already in use');
         }
 
+        if (data.car) {
+          const existingCar = await this.carRepo.findOne({ where: { licensePlate: data.car.licensePlate } });
+          if (existingCar) {
+            throw new BadRequestException('A car with this license plate already exists.');
+          }
+        }
+
         const hash = await bcrypt.hash(data.password, 10);
         const user = this.userRepo.create({
         email: data.email,
@@ -89,7 +96,14 @@ export class AuthService {
             ...data.car,
             owner: user,
         });
-        await this.carRepo.save(car);
+        try {
+          await this.carRepo.save(car);
+        } catch (error) {
+          if (error.code === '23505') {
+            throw new BadRequestException('A car with this license plate already exists.');
+          }
+          throw error;
+        }
         }
 
         return this.login(user);
