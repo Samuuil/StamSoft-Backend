@@ -7,6 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client } from 'google-auth-library';
 import { ConfigService } from '@nestjs/config';
+import { EmailService } from './email.service';
 
 @Injectable()
 export class AuthService {
@@ -19,7 +20,8 @@ export class AuthService {
         private carRepo: Repository<Car>,
         private jwtService: JwtService,
         private config: ConfigService,
-      ) {
+        private emailService: EmailService
+    ) {
         this.google = new OAuth2Client();
       }
 
@@ -113,5 +115,24 @@ export class AuthService {
             lastName: user.lastName,
         },
         };
+    }
+
+    async forgotPassword(email: string): Promise<void> {
+        const user = await this.userRepo.findOne({ where: { email } });
+        if (!user) {
+            throw new UnauthorizedException(`No user found for email: ${email}`);
+        }
+        await this.emailService.sendResetPasswordLink(email);
+    }
+
+    async resetPassword(token: string, password: string): Promise<void> {
+        const email = await this.emailService.decodeConfirmationToken(token);
+        const user = await this.userRepo.findOne({ where: { email } });
+        if (!user) {
+            throw new UnauthorizedException(`No user found for email: ${email}`);
+        }
+        const hash = await bcrypt.hash(password, 10);
+        user.password = hash;
+        await this.userRepo.save(user);
     }
 }
