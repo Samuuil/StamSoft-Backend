@@ -97,10 +97,13 @@ export class AuthService {
 
     async loginWithEmail(email: string, password: string) {
         const user = await this.userRepo.findOne({ where: { email } });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-        throw new UnauthorizedException('Invalid credentials');
+        if (!user) {
+            throw new UnauthorizedException('No user found with this email');
         }
-
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            throw new UnauthorizedException('Incorrect password');
+        }
         return this.login(user);
     }
 
@@ -135,4 +138,26 @@ export class AuthService {
         user.password = hash;
         await this.userRepo.save(user);
     }
+
+    async loginWithFacebook(data: {
+        facebookId: string;
+        email?: string;
+        firstName?: string;
+        lastName?: string;
+    }) {
+        let user = await this.userRepo.findOne({ where: { email: data.email } });
+        
+        if (!user) {
+            user = this.userRepo.create({
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            password: '',
+            });
+            await this.userRepo.save(user);
+        }
+        
+        return this.login(user);
+    }
+      
 }

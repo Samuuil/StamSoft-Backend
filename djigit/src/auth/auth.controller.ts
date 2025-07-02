@@ -1,6 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('auth')
@@ -58,5 +59,18 @@ export class AuthController {
         @Body() { token, password }: { token: string; password: string }
     ): Promise<void> {
         return this.authService.resetPassword(token, password);
+    }
+
+    @Get('facebook')
+    @UseGuards(AuthGuard('facebook'))
+    async facebookLogin() {
+        // initiates redirect to Facebook
+    }
+
+    @Get('facebook/callback')
+    @UseGuards(AuthGuard('facebook'))
+    async facebookCallback(@Req() req) {
+        // successful login: return user + token
+        return req.user;
     }
 }
