@@ -4,9 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { CarModule } from './car.module';
-import { UserModule } from './user.module';
-import { ReportModule } from './report.module';
+import { CarModule } from './modules/car.module';
+import { UserModule } from './modules/user.module';
+import { ReportModule } from './modules/report.module';
 
 @Module({
   imports: [
