@@ -20,4 +20,16 @@ export class AuthController {
     google(@Body() body: GoogleLoginDto) {
         return this.authService.loginWithGoogle(body.idToken);
     }
+
+    @Post('forgot-password')
+        async forgotPassword(@Body() { email }: { email: string }): Promise<void> {
+            return this.authService.forgotPassword(email);
+    }
+
+    @Post('reset-password')
+    async resetPassword(
+        @Body() { token, password }: { token: string; password: string }
+    ): Promise<void> {
+        return this.authService.resetPassword(token, password);
+    }
 }
