@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../typeorm/src/entity/user.entity';
+import { Car } from '../../typeorm/src/entity/car.entity'; 
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -14,11 +15,13 @@ export class AuthService {
     constructor(
         @InjectRepository(User)
         private userRepo: Repository<User>,
+        @InjectRepository(Car)
+        private carRepo: Repository<Car>,
         private jwtService: JwtService,
-        private config: ConfigService
-    ) {
+        private config: ConfigService,
+      ) {
         this.google = new OAuth2Client();
-    }
+      }
 
     async loginWithGoogle(idToken: string) {
         const ticket = await this.google.verifyIdToken({
@@ -53,11 +56,16 @@ export class AuthService {
         return this.login(user);
    }
 
-    async signup(data: {
+   async signup(data: {
         email: string;
         password: string;
         firstName?: string;
         lastName?: string;
+        car?: {
+        brand: string;
+        model: string;
+        licensePlate: string;
+      };
     }) {
         const existing = await this.userRepo.findOne({ where: { email: data.email } });
         if (existing) {
@@ -65,8 +73,23 @@ export class AuthService {
         }
 
         const hash = await bcrypt.hash(data.password, 10);
-        const user = this.userRepo.create({ ...data, password: hash });
+        const user = this.userRepo.create({
+        email: data.email,
+        password: hash,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        });
+
         await this.userRepo.save(user);
+
+        if (data.car) {
+        const car = this.carRepo.create({
+            ...data.car,
+            owner: user,
+        });
+        await this.carRepo.save(car);
+        }
+
         return this.login(user);
     }
 
