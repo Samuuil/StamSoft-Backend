@@ -9,6 +9,7 @@ import {Car} from '../../typeorm/src/entity/car.entity';
 import { JwtStrategy } from './jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EmailService } from './email.service';
+import { FacebookStrategy } from './facebook.strategy';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { EmailService } from './email.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, EmailService],
+  providers: [AuthService, JwtStrategy, EmailService, FacebookStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
