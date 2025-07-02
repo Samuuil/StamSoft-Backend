@@ -135,4 +135,26 @@ export class AuthService {
         user.password = hash;
         await this.userRepo.save(user);
     }
+
+    async loginWithFacebook(data: {
+        facebookId: string;
+        email?: string;
+        firstName?: string;
+        lastName?: string;
+    }) {
+        let user = await this.userRepo.findOne({ where: { email: data.email } });
+        
+        if (!user) {
+            user = this.userRepo.create({
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            password: '',
+            });
+            await this.userRepo.save(user);
+        }
+        
+        return this.login(user);
+    }
+      
 }
