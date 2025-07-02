@@ -7,8 +7,27 @@ export class Report {
   id: number;
 
   @Column()
+  licensePlate: string;
+
+  @Column()
   description: string;
+
+  @Column('double precision')
+  latitude: number;
+
+  @Column('double precision')
+  longitude: number;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Column()
+  imageUrl: string;
+
+  @Column({ nullable: true })
+  videoUrl?: string;
 
   @ManyToOne(() => User, (user) => user.reports, { onDelete: 'SET NULL' })
   reportedBy: User;
 }
+
