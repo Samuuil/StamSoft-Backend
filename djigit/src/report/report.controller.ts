@@ -10,7 +10,7 @@ import {
   import { AuthGuard } from '@nestjs/passport';
   import { FilesInterceptor } from '@nestjs/platform-express';
   import { ReportService } from './report.service';
-  import { s3 } from '../src/aws/s3';
+  import { s3 } from '../../src/aws/s3';
   import { PutObjectCommand } from '@aws-sdk/client-s3';
   import { v4 as uuidv4 } from 'uuid';
   
@@ -31,10 +31,7 @@ import {
     ) {
       const uploaded: { imageUrl?: string; videoUrl?: string } = {};
       const bucket = process.env.DO_SPACES_BUCKET;
-    //   console.log('Key:', process.env.DO_SPACES_KEY);
-    //     console.log('Secret:', process.env.DO_SPACES_SECRET);
-    //     console.log('Bucket:', process.env.DO_SPACES_BUCKET);
-  
+      
       for (const file of files) {
         const filename = `${uuidv4()}-${file.originalname}`;
         await s3.send(
