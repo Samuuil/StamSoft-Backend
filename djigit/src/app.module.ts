@@ -6,7 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CarModule } from './car/car.module';
 import { UserModule } from './user/user.module';
-import { ReportModule } from './modules/report.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
   imports: [
