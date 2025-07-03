@@ -76,7 +76,7 @@ export class AuthService {
 
         if (data.car) {
           const existingCar = await this.carRepo.findOne({ where: { licensePlate: data.car.licensePlate } });
-          if (existingCar) {
+          if (existingCar && existingCar.licensePlate != '' && existingCar.licensePlate != null) {
             throw new BadRequestException('A car with this license plate already exists.');
           }
         }
