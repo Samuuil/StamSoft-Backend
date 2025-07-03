@@ -2,7 +2,7 @@ FROM node:24-alpine
 WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
-COPY .env ./
+# COPY .env ./
 COPY src ./src
 COPY typeorm ./typeorm
 COPY tsconfig.build.json ./
