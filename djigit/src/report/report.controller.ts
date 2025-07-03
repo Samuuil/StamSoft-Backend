@@ -1,11 +1,14 @@
 import {
     Controller,
     Post,
+    Get,
+    Delete,
     UseInterceptors,
     UploadedFiles,
     UseGuards,
     Request,
     Body,
+    Param
   } from '@nestjs/common';
   import { AuthGuard } from '@nestjs/passport';
   import { FilesInterceptor } from '@nestjs/platform-express';
@@ -57,6 +60,21 @@ import {
         longitude: parseFloat(longitude),
         user: req.user,
       });
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('recent')
+    async getRecentReports() {
+      const reports = await this.reportService.getLatestReports(30);
+      return reports;
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Delete(':id')
+    async deleteReport(@Param('id') id: string, @Request() req) {
+      const reportId = parseInt(id, 10);
+      await this.reportService.deleteReport(reportId, req.user.userId);
+      return { message: 'Report deleted successfully' };
     }
   }
   
