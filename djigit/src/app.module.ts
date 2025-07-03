@@ -9,6 +9,7 @@ import { UserModule } from './user/user.module';
 import { ReportModule } from './report/report.module';
 import { RedisModule } from './redis.provider';
 
+
 @Module({
   imports: [
     ConfigModule.forRoot({

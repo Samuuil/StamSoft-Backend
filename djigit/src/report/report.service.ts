@@ -8,6 +8,7 @@ import { Car } from '../../typeorm/src/entity/car.entity';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { s3 } from '../../src/aws/s3';
 import { v4 as uuidv4 } from 'uuid';
+import { ReportDto, UserDto } from './dto/report.dto';
 
 @Injectable()
 export class ReportService {
@@ -144,4 +145,49 @@ async getReportsByLicensePlate(licensePlate: string) {
   
   return reports;
 }
+  async getLatestReports(limit = 30): Promise<ReportDto[]> {
+    const reports = await this.reportRepo.find({
+      order: { createdAt: 'DESC' },
+      take: limit,
+      relations: ['reportedBy'],
+    });
+
+    return reports.map(report => {
+      const userDto: UserDto = {
+        id: report.reportedBy.id,
+        email: report.reportedBy.email,
+      };
+
+      const reportDto: ReportDto = {
+        id: report.id,
+        licensePlate: report.licensePlate,
+        description: report.description,
+        latitude: report.latitude,
+        longitude: report.longitude,
+        createdAt: report.createdAt,
+        imageUrl: report.imageUrl,
+        videoUrl: report.videoUrl,
+        reportedBy: userDto,
+      };
+
+      return reportDto;
+    });
+  }
+
+  async deleteReport(reportId: number, userId: number): Promise<void> {
+    const report = await this.reportRepo.findOne({
+      where: { id: reportId },
+      relations: ['reportedBy'],
+    });
+  
+    if (!report) {
+      throw new Error('Report not found');
+    }
+  
+    if (report.reportedBy.id !== userId) {
+      throw new Error('You do not have permission to delete this report');
+    }
+  
+    await this.reportRepo.delete(reportId);
+  }
 }
