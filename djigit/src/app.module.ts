@@ -4,9 +4,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { CarModule } from './modules/car.module';
-import { UserModule } from './modules/user.module';
-import { ReportModule } from './modules/report.module';
+import { CarModule } from './car/car.module';
+import { UserModule } from './user/user.module';
+import { ReportModule } from './report/report.module';
+import { RedisModule } from './redis.provider';
+
 
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { ReportModule } from './modules/report.module';
     CarModule,
     UserModule,
     ReportModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
