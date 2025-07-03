@@ -3,10 +3,13 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 COPY .env ./
-COPY dist ./dist
+COPY src ./src
+COPY typeorm ./typeorm
+COPY tsconfig.build.json ./
 #RUN npm install --legacy-peer-deps
 RUN npm install
 RUN npm install -g @nestjs/cli
+RUN npm run build
 EXPOSE 3000
 CMD ["npm", "start"]
 
