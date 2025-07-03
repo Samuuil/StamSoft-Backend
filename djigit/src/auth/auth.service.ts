@@ -74,9 +74,9 @@ export class AuthService {
         throw new UnauthorizedException('Email already in use');
         }
 
-        if (data.car) {
+        if (data.car && data.car.licensePlate != "" && data.car.licensePlate != null) {
           const existingCar = await this.carRepo.findOne({ where: { licensePlate: data.car.licensePlate } });
-          if (existingCar && (existingCar.licensePlate != '' || existingCar.licensePlate != null)) {
+          if (existingCar && (existingCar.licensePlate != "" || existingCar.licensePlate != null)) {
             throw new BadRequestException('A car with this license plate already exists.');
           }
         }

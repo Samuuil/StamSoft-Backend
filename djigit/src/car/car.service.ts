@@ -20,7 +20,7 @@ export class CarService {
     if (!user) throw new NotFoundException('User not found');
     const existingCar = await this.carRepo.findOne({ where: { licensePlate: createCarDto.licensePlate } });
 
-    if (existingCar && (existingCar.licensePlate != '' || existingCar.licensePlate != null)) {
+    if (existingCar && (existingCar.licensePlate != "" || existingCar.licensePlate != null)) {
         throw new BadRequestException('A car with this license plate already exists.');
     }
     const car = this.carRepo.create({
@@ -54,9 +54,9 @@ export class CarService {
       throw new ForbiddenException('You can only update your own car.');
     }
 
-    if (updateCarDto.licensePlate && updateCarDto.licensePlate !== car.licensePlate) {
+    if ((updateCarDto.licensePlate != "" || updateCarDto.licensePlate != null) && updateCarDto.licensePlate !== car.licensePlate) {
       const existingCar = await this.carRepo.findOne({ where: { licensePlate: updateCarDto.licensePlate } });
-      if (existingCar && (existingCar.licensePlate != '' || existingCar.licensePlate != null)) {
+      if (existingCar && (existingCar.licensePlate != "" || existingCar.licensePlate != null)) {
         throw new BadRequestException('A car with this license plate already exists.');
       }
     }
