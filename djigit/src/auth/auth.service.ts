@@ -121,16 +121,19 @@ export class AuthService {
         return this.login(user);
     }
 
-    private login(user: User) {
-        const payload = { sub: user.id, email: user.email };
+    private async login(user: User) {
+        const tokens = await this.generateTokens(user);
+        await this.updateRefreshToken(user.id, tokens.refreshToken);
+      
         return {
-        accessToken: this.jwtService.sign(payload),
-        user: {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          user: {
             id: user.id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
-        },
+          },
         };
     }
 
@@ -173,5 +176,50 @@ export class AuthService {
         
         return this.login(user);
     }
+
+
+    async generateTokens(user: User) {
+        const payload = { sub: user.id, email: user.email };
+      
+        const [accessToken, refreshToken] = await Promise.all([
+          this.jwtService.signAsync(payload, {
+            secret: this.config.get<string>('JWT_SECRET'),
+            expiresIn: '15m',
+          }),
+          this.jwtService.signAsync(payload, {
+            secret: this.config.get<string>('JWT_REFRESH_SECRET'),
+            expiresIn: '7d',
+          }),
+        ]);
+      
+        return { accessToken, refreshToken };
+    }
+
+    async updateRefreshToken(userId: number, refreshToken: string) {
+        const hash = await bcrypt.hash(refreshToken, 10);
+        await this.userRepo.update(userId, { refreshToken: hash });
+    }
+
+    async refreshTokens(userId: number, refreshToken: string) {
+        const user = await this.userRepo.findOne({ where: { id: userId } });
+        
+        if (!user || !user.refreshToken) {
+            throw new UnauthorizedException('User not found or no refresh token stored');
+        }
+        
+        const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+        if (!isMatch) {
+            throw new UnauthorizedException('Invalid refresh token');
+        }
+        
+        const tokens = await this.generateTokens(user);
+        await this.updateRefreshToken(user.id, tokens.refreshToken);
+        
+        return {
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+        };
+    }
+      
       
 }

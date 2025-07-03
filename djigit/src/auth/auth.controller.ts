@@ -80,4 +80,10 @@ export class AuthController {
         // successful login: return user + token
         return req.user;
     }
+
+    @Post('refresh')
+    async refresh(@Body() body: { userId: number; refreshToken: string }) {
+        console.log(body.refreshToken);
+        return this.authService.refreshTokens(body.userId, body.refreshToken);
+    }
 }
