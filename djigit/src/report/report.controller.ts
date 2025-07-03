@@ -1,7 +1,6 @@
 import {
     Controller,
     Post,
-    Get,
     Delete,
     UseInterceptors,
     UploadedFiles,
@@ -15,7 +14,7 @@ import {
   import { AuthGuard } from '@nestjs/passport';
   import { FilesInterceptor } from '@nestjs/platform-express';
   import { ReportService } from './report.service';
-  import { ApiTags, ApiBearerAuth, ApiOperation, ApiBody, ApiOkResponse, ApiResponse, ApiQuery } from '@nestjs/swagger';
+  import { ApiTags, ApiBearerAuth, ApiOperation, ApiBody, ApiOkResponse, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
   
   @ApiTags('report')
   @ApiBearerAuth()
@@ -106,18 +105,37 @@ import {
       return this.reportService.getReportsByLicensePlate(licensePlate);
     }
 
+    @ApiOperation({ summary: 'Get the most recent reports' })
+    @ApiOkResponse({ description: 'Array of the most recent reports', schema: { example: [
+      {
+        id: 1,
+        licensePlate: 'ABC123',
+        description: 'Broken window',
+        latitude: 40.7128,
+        longitude: -74.0060,
+        createdAt: '2024-07-03T10:00:00.000Z',
+        imageUrl: 'https://.../file.jpg',
+        videoUrl: null,
+        reportedBy: { id: 1, email: 'user@example.com' }
+      }
+    ]}})
+    @ApiResponse({ status: 401, description: 'Unauthorized. JWT token missing or invalid.' })
     @UseGuards(AuthGuard('jwt'))
     @Get('recent')
     async getRecentReports() {
-      const reports = await this.reportService.getLatestReports(30);
-      return reports;
+      return this.reportService.getLatestReports();
     }
 
+    @ApiOperation({ summary: 'Delete a report by ID (only by the user who created it)' })
+    @ApiParam({ name: 'id', type: Number, example: 1 })
+    @ApiOkResponse({ description: 'Report successfully deleted', schema: { example: { message: 'Report deleted successfully' } } })
+    @ApiResponse({ status: 401, description: 'Unauthorized. JWT token missing or invalid.' })
+    @ApiResponse({ status: 403, description: 'Forbidden. You can only delete your own report.' })
+    @ApiResponse({ status: 404, description: 'Report not found with the provided ID.' })
     @UseGuards(AuthGuard('jwt'))
     @Delete(':id')
-    async deleteReport(@Param('id') id: string, @Request() req) {
-      const reportId = parseInt(id, 10);
-      await this.reportService.deleteReport(reportId, req.user.userId);
+    async deleteReport(@Request() req, @Param('id') id: number) {
+      await this.reportService.deleteReport(id, req.user.userId);
       return { message: 'Report deleted successfully' };
     }
   }
