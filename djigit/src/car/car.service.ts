@@ -19,8 +19,9 @@ export class CarService {
     const user = await this.userRepo.findOne({ where: { id: userPayload.userId } });
     if (!user) throw new NotFoundException('User not found');
     const existingCar = await this.carRepo.findOne({ where: { licensePlate: createCarDto.licensePlate } });
-    if (existingCar) {
-      throw new BadRequestException('A car with this license plate already exists.');
+
+    if (existingCar && (existingCar.licensePlate != '' || existingCar.licensePlate != null)) {
+        throw new BadRequestException('A car with this license plate already exists.');
     }
     const car = this.carRepo.create({
       ...createCarDto,
@@ -55,7 +56,7 @@ export class CarService {
 
     if (updateCarDto.licensePlate && updateCarDto.licensePlate !== car.licensePlate) {
       const existingCar = await this.carRepo.findOne({ where: { licensePlate: updateCarDto.licensePlate } });
-      if (existingCar) {
+      if (existingCar && (existingCar.licensePlate != '' || existingCar.licensePlate != null)) {
         throw new BadRequestException('A car with this license plate already exists.');
       }
     }
