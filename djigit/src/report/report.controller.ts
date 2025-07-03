@@ -8,21 +8,43 @@ import {
     UseGuards,
     Request,
     Body,
+    Get,
+    Query,
     Param
   } from '@nestjs/common';
   import { AuthGuard } from '@nestjs/passport';
   import { FilesInterceptor } from '@nestjs/platform-express';
   import { ReportService } from './report.service';
-  import { s3 } from '../../src/aws/s3';
-  import { PutObjectCommand } from '@aws-sdk/client-s3';
-  import { v4 as uuidv4 } from 'uuid';
+  import { ApiTags, ApiBearerAuth, ApiOperation, ApiBody, ApiOkResponse, ApiResponse, ApiQuery } from '@nestjs/swagger';
   
+  @ApiTags('report')
+  @ApiBearerAuth()
   @Controller('reports')
   export class ReportController {
     constructor(private readonly reportService: ReportService) {}
   
-    @UseGuards(AuthGuard('jwt'))
+    @ApiOperation({ summary: 'Upload a new report with files (image/video)' })
+    @ApiBody({ description: 'Report upload data', schema: { example: {
+      files: 'file',
+      description: 'Broken window',
+      licensePlate: 'ABC123',
+      latitude: '40.7128',
+      longitude: '-74.0060'
+    }}})
+    @ApiOkResponse({ description: 'Report successfully created', schema: { example: {
+      id: 1,
+      imageUrl: 'https://.../file.jpg',
+      videoUrl: null,
+      description: 'Broken window',
+      licensePlate: 'ABC123',
+      latitude: 40.7128,
+      longitude: -74.0060,
+      createdAt: '2024-07-03T10:00:00.000Z',
+      reportedBy: { id: 1, email: 'user@example.com' }
+    }}})
+    @ApiResponse({ status: 401, description: 'Unauthorized. JWT token missing or invalid.' })
     @Post('upload')
+    @UseGuards(AuthGuard('jwt'))
     @UseInterceptors(FilesInterceptor('files'))
     async uploadReport(
       @UploadedFiles() files: Express.Multer.File[],
@@ -32,34 +54,56 @@ import {
       @Body('latitude') latitude: string,
       @Body('longitude') longitude: string,
     ) {
-      const uploaded: { imageUrl?: string; videoUrl?: string } = {};
-      const bucket = process.env.DO_SPACES_BUCKET;
-      
-      for (const file of files) {
-        const filename = `${uuidv4()}-${file.originalname}`;
-        await s3.send(
-          new PutObjectCommand({
-            Bucket: bucket,
-            Key: filename,
-            Body: file.buffer,
-            ACL: 'public-read',
-            ContentType: file.mimetype,
-          }),
-        );
-  
-        const fileUrl = `https://${bucket}.nyc3.digitaloceanspaces.com/${filename}`;
-        if (file.mimetype.startsWith('image')) uploaded.imageUrl = fileUrl;
-        if (file.mimetype.startsWith('video')) uploaded.videoUrl = fileUrl;
-      }
-  
-      return this.reportService.createReport({
-        ...uploaded,
+      return this.reportService.uploadReportWithFiles(files, {
         description,
         licensePlate,
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
         user: req.user,
       });
+    }
+
+    @ApiOperation({ summary: 'Get all reports for the authenticated user\'s cars' })
+    @ApiOkResponse({ description: 'Array of reports for user\'s cars', schema: { example: [
+      {
+        id: 1,
+        imageUrl: 'https://.../file.jpg',
+        videoUrl: null,
+        description: 'Broken window',
+        licensePlate: 'ABC123',
+        latitude: 40.7128,
+        longitude: -74.0060,
+        createdAt: '2024-07-03T10:00:00.000Z',
+        reportedBy: { id: 1, email: 'user@example.com' }
+      }
+    ]}})
+    @ApiResponse({ status: 401, description: 'Unauthorized. JWT token missing or invalid.' })
+    @UseGuards(AuthGuard('jwt'))
+    @Get('my-cars')
+    async getReportsForMyCars(@Request() req) {
+      return this.reportService.getReportsForUserCars(req.user.userId);
+    }
+
+    @ApiOperation({ summary: 'Search for all reports by license plate' })
+    @ApiQuery({ name: 'licensePlate', type: String, example: 'ABC123' })
+    @ApiOkResponse({ description: 'Array of reports for the given license plate', schema: { example: [
+    {
+        id: 1,
+        imageUrl: 'https://.../file.jpg',
+        videoUrl: null,
+        description: 'Broken window',
+        licensePlate: 'ABC123',
+        latitude: 40.7128,
+        longitude: -74.0060,
+        createdAt: '2024-07-03T10:00:00.000Z',
+        reportedBy: { id: 1, email: 'user@example.com' }
+    }
+    ]}})
+    @ApiResponse({ status: 401, description: 'Unauthorized. JWT token missing or invalid.' })
+    @UseGuards(AuthGuard('jwt'))
+    @Get('search-by-plate')
+    async getReportsByLicensePlate(@Query('licensePlate') licensePlate: string) {
+      return this.reportService.getReportsByLicensePlate(licensePlate);
     }
 
     @UseGuards(AuthGuard('jwt'))

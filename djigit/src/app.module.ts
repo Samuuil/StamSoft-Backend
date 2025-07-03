@@ -7,6 +7,8 @@ import { AuthModule } from './auth/auth.module';
 import { CarModule } from './car/car.module';
 import { UserModule } from './user/user.module';
 import { ReportModule } from './report/report.module';
+import { RedisModule } from './redis.provider';
+
 
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { ReportModule } from './report/report.module';
     CarModule,
     UserModule,
     ReportModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
