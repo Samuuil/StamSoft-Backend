@@ -13,12 +13,12 @@ export class InitialMigration1751460077535 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "videoUrl"`);
-        await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "imageUrl"`);
-        await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "createdAt"`);
-        await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "longitude"`);
-        await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "latitude"`);
-        await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "licensePlate"`);
+        // await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "videoUrl"`);
+        // await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "imageUrl"`);
+        // await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "createdAt"`);
+        // await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "longitude"`);
+        // await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "latitude"`);
+        // await queryRunner.query(`ALTER TABLE "report" DROP COLUMN "licensePlate"`);
     }
 
 }
