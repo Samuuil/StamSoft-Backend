@@ -32,7 +32,10 @@ import {
     }}})
     @ApiOkResponse({ description: 'Report successfully created', schema: { example: {
       id: 1,
-      imageUrl: 'https://.../file.jpg',
+      imageUrls: [
+        'https://.../file1.jpg',
+        'https://.../file2.jpg'
+      ],
       videoUrl: null,
       description: 'Broken window',
       licensePlate: 'ABC123',
@@ -66,7 +69,10 @@ import {
     @ApiOkResponse({ description: 'Array of reports for user\'s cars', schema: { example: [
       {
         id: 1,
-        imageUrl: 'https://.../file.jpg',
+        imageUrls: [
+          'https://.../file1.jpg',
+          'https://.../file2.jpg'
+        ],
         videoUrl: null,
         description: 'Broken window',
         licensePlate: 'ABC123',
@@ -88,7 +94,10 @@ import {
     @ApiOkResponse({ description: 'Array of reports for the given license plate', schema: { example: [
     {
         id: 1,
-        imageUrl: 'https://.../file.jpg',
+        imageUrls: [
+          'https://.../file1.jpg',
+          'https://.../file2.jpg'
+        ],
         videoUrl: null,
         description: 'Broken window',
         licensePlate: 'ABC123',
@@ -114,7 +123,10 @@ import {
         latitude: 40.7128,
         longitude: -74.0060,
         createdAt: '2024-07-03T10:00:00.000Z',
-        imageUrl: 'https://.../file.jpg',
+        imageUrls: [
+          'https://.../file1.jpg',
+          'https://.../file2.jpg'
+        ],
         videoUrl: null,
         reportedBy: { id: 1, email: 'user@example.com' }
       }
