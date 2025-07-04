@@ -227,6 +227,10 @@ export class AuthService {
     }
 
     async logout(userId: number): Promise<void> {
-        await this.userRepo.update(userId, { refreshToken: undefined });
+        const user = await this.userRepo.findOne({ where: { id: userId } });
+        if (user) {
+            user.refreshToken = null;
+            await this.userRepo.save(user);
+        }
     }
 }

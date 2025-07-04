@@ -26,5 +26,5 @@ export class User {
   reports: Report[];
 
   @Column({ nullable: true })
-  refreshToken?: string;
+  refreshToken?: string | null;
 }
