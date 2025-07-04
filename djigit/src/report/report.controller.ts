@@ -24,7 +24,11 @@ import {
   
     @ApiOperation({ summary: 'Upload a new report with files (image/video)' })
     @ApiBody({ description: 'Report upload data', schema: { example: {
-      files: 'file',
+      imageUrls: [
+        'https://.../file1.jpg',
+        'https://.../file2.jpg'
+      ],
+      videoUrl: 'https://.../video1.mp4',
       description: 'Broken window',
       licensePlate: 'ABC123',
       latitude: '40.7128',

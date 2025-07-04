@@ -16,7 +16,7 @@ export class UserService {
       relations: ['cars', 'reports'],
     });
     if (!user) return null;
-    const { password, ...rest } = user;
+    const { password, refreshToken, ...rest } = user;
     return rest;
   }
 } 
