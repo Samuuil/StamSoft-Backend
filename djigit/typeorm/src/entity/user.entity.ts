@@ -25,6 +25,6 @@ export class User {
   @OneToMany(() => Report, (report) => report.reportedBy)
   reports: Report[];
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   refreshToken?: string;
 }
