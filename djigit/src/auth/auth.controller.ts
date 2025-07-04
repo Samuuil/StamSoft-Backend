@@ -81,15 +81,19 @@ export class AuthController {
         return req.user;
     }
 
+    @ApiOperation({ summary: 'Refresh JWT tokens' })
+    @ApiBody({ schema: { example: { userId: 1, refreshToken: 'refresh.token.here' }}})
+    @ApiOkResponse({ description: 'New access and refresh tokens issued.', schema: { example: { accessToken: 'jwt.token.here', refreshToken: 'refresh.token.here' } } })
+    @ApiResponse({ status: 401, description: 'Invalid or expired refresh token.' })
     @Post('refresh')
     async refresh(@Body() body: { userId: number; refreshToken: string }) {
         console.log(body.refreshToken);
         return this.authService.refreshTokens(body.userId, body.refreshToken);
     }
 
-    @ApiOperation({ summary: 'User logout' })
+    @ApiOperation({ summary: 'User logout (invalidate refresh token)' })
     @ApiBody({ schema: { example: { userId: 1 }}})
-    @ApiOkResponse({ description: 'User successfully logged out.', schema: { example: { message: 'User successfully logged out.' } } })
+    @ApiOkResponse({ description: 'User successfully logged out. Refresh token invalidated.', schema: { example: { message: 'User successfully logged out.' } } })
     @Post('logout')
     async logout(@Body() body: { userId: number }) {
         await this.authService.logout(body.userId);
