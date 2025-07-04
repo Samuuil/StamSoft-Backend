@@ -225,6 +225,8 @@ export class AuthService {
             refreshToken: tokens.refreshToken,
         };
     }
-      
-      
+
+    async logout(userId: number): Promise<void> {
+        await this.userRepo.update(userId, { refreshToken: undefined });
+    }
 }
