@@ -21,8 +21,8 @@ export class Report {
   @CreateDateColumn()
   createdAt: Date;
 
-  @Column( {nullable: true})
-  imageUrl?: string;
+  @Column('text', { array: true, nullable: true })
+  imageUrls?: string[];
 
   @Column({ nullable: true })
   videoUrl?: string;
