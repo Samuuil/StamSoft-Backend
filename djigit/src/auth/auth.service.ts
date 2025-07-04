@@ -200,15 +200,19 @@ export class AuthService {
         return { accessToken, refreshToken };
     }
 
-    async updateRefreshToken(userId: number, refreshToken: string) {
-        const hash = await bcrypt.hash(refreshToken, 10);
-        await this.userRepo.update(userId, { refreshToken: hash });
+    async updateRefreshToken(userId: number, refreshToken: string | null) {
+        if (refreshToken) {
+            const hash = await bcrypt.hash(refreshToken, 10);
+            await this.userRepo.update(userId, { refreshToken: hash });
+        } else {
+            await this.userRepo.update(userId, { refreshToken: "" });
+        }
     }
 
     async refreshTokens(userId: number, refreshToken: string) {
         const user = await this.userRepo.findOne({ where: { id: userId } });
         
-        if (!user || !user.refreshToken) {
+        if (!user || !user.refreshToken || user.refreshToken === "") {
             throw new UnauthorizedException('User not found or no refresh token stored');
         }
         
@@ -227,10 +231,6 @@ export class AuthService {
     }
 
     async logout(userId: number): Promise<void> {
-        const user = await this.userRepo.findOne({ where: { id: userId } });
-        if (user) {
-            user.refreshToken = null;
-            await this.userRepo.save(user);
-        }
+        await this.userRepo.update(userId, { refreshToken: "" });
     }
 }
