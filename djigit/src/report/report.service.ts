@@ -6,7 +6,7 @@ import { User } from '../../typeorm/src/entity/user.entity';
 import Redis from 'ioredis';
 import { Car } from '../../typeorm/src/entity/car.entity';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { s3 } from '../../src/aws/s3';
+import { s3, deleteFileFromS3 } from '../../src/aws/s3';
 import { v4 as uuidv4 } from 'uuid';
 import { ReportDto, UserDto } from './dto/report.dto';
 
@@ -27,14 +27,14 @@ export class ReportService {
   ) {}
 
   async createReport(data: {
-    imageUrl?: string;
+    imageUrls?: string[];
     videoUrl?: string;
     description?: string;
     licensePlate: string;
     latitude: number;
     longitude: number;
     user: { userId: number };
-  }) {
+  }): Promise<ReportDto> {
     const userEntity = await this.userRepo.findOne({
       where: { id: data.user.userId },
     });
@@ -44,7 +44,7 @@ export class ReportService {
     }
   
     const report = this.reportRepo.create({
-      imageUrl: data.imageUrl,
+      imageUrls: data.imageUrls,
       videoUrl: data.videoUrl,
       description: data.description,
       licensePlate: data.licensePlate,
@@ -53,7 +53,22 @@ export class ReportService {
       reportedBy: userEntity,
     });
   
-    return this.reportRepo.save(report);
+    const saved = await this.reportRepo.save(report);
+    // Return only safe fields
+    return {
+      id: saved.id,
+      licensePlate: saved.licensePlate,
+      description: saved.description,
+      latitude: saved.latitude,
+      longitude: saved.longitude,
+      createdAt: saved.createdAt,
+      imageUrls: saved.imageUrls,
+      videoUrl: saved.videoUrl,
+      reportedBy: {
+        id: userEntity.id,
+        email: userEntity.email,
+      },
+    };
   }
 
   async getReportsForUserCars(userId: number) {
@@ -82,7 +97,7 @@ export class ReportService {
     longitude: number;
     user: { userId: number };
   }) {
-    const uploaded: { imageUrl?: string; videoUrl?: string } = {};
+    const uploaded: { imageUrls?: string[]; videoUrl?: string } = { imageUrls: [] };
     const bucket = process.env.DO_SPACES_BUCKET;
 
     for (const file of files) {
@@ -97,7 +112,9 @@ export class ReportService {
         }),
       );
       const fileUrl = `https://${bucket}.nyc3.digitaloceanspaces.com/${filename}`;
-      if (file.mimetype.startsWith('image')) uploaded.imageUrl = fileUrl;
+      if (file.mimetype.startsWith('image')) {
+        if (uploaded.imageUrls!.length < 5) uploaded.imageUrls!.push(fileUrl);
+      }
       if (file.mimetype.startsWith('video')) uploaded.videoUrl = fileUrl;
     }
 
@@ -165,7 +182,7 @@ async getReportsByLicensePlate(licensePlate: string) {
         latitude: report.latitude,
         longitude: report.longitude,
         createdAt: report.createdAt,
-        imageUrl: report.imageUrl,
+        imageUrls: report.imageUrls,
         videoUrl: report.videoUrl,
         reportedBy: userDto,
       };
@@ -186,6 +203,18 @@ async getReportsByLicensePlate(licensePlate: string) {
   
     if (report.reportedBy.id !== userId) {
       throw new Error('You do not have permission to delete this report');
+    }
+
+    // Delete all images from S3
+    if (report.imageUrls && Array.isArray(report.imageUrls)) {
+      for (const url of report.imageUrls) {
+        try {
+          await deleteFileFromS3(url);
+        } catch (e) {
+          // Optionally log error, but continue
+          console.error('Failed to delete image from S3:', url, e);
+        }
+      }
     }
   
     await this.reportRepo.delete(reportId);

@@ -10,7 +10,7 @@ description: string;
 latitude: number;
 longitude: number;
 createdAt: Date;
-imageUrl?: string;
+imageUrls?: string[];
 videoUrl?: string;
 reportedBy: UserDto;
 }
